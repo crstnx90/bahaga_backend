@@ -1,11 +1,14 @@
 package com.bahaga.booking.model;
 
+import com.bahaga.booking.dto.ReservacionDTO;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.sql.Time;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -17,44 +20,56 @@ import java.util.List;
 public class Reservacion {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "reservacion_id")
-    private Long reservacion_id;
+    @Column(name = "reservacionId")
+    private Long reservacionId;
 
-    private Date fecha_evento;
+    private LocalDate fechaEvento;
     private Time hora;
+
     @ManyToOne
+    @JoinColumn(name = "persona_id")
+    private Persona persona;
+
+    @ManyToOne
+    @JoinColumn(name="salonId")//Relacion de salon
     private Salon salon;
 
-    @ManyToMany
-    private List<Producto> producto;
-
-    @ManyToMany
-    private List<Servicio> servicio;
+    @OneToMany(mappedBy = "reservacion")
+    private List<Producto> productos=new ArrayList<>();
 
     private Double total;
 
-    public void calcularTotal(){
-        // lógica para calcular el costo total basado en productos y servicios seleccionados
+    private TipoEvento tipoEvento;
+    private Integer cantidadPersonas;
+    private String observaciones;
+
+    // Metodo para calcular el total de la reserva
+    public void calcularTotal() {
+        if (productos != null && !productos.isEmpty()) {
+            this.total = productos.stream()
+                    .mapToDouble(producto -> producto.getPrecio() * producto.getCantidad())
+                    .sum();
+        } else {
+            this.total = 0.0;  // Si no hay productos, el total es 0
+        }
     }
 
-    public void addProducto(List<Producto> producto) {
+
+    // Metodo para calcular el total antes de la persistencia
+    @PrePersist
+    public void calcularTotalPrePersist() {
+        calcularTotal();
     }
 
-    public void addServicio(List<Servicio> servicio) {
+    // Constructor que acepta el DTO de ReservacionDTO
+    public Reservacion(ReservacionDTO datosReservacion, Persona persona){
+        this.fechaEvento = datosReservacion.fechaEvento();
+        this.hora = datosReservacion.hora();
+        this.total = datosReservacion.total();
+        this.persona=persona;
+        this.tipoEvento = datosReservacion.tipoEvento();
+        this.cantidadPersonas = datosReservacion.cantidadPersonas();
+        this.observaciones = datosReservacion.observaciones();
     }
 
-    public void deleteProducto(List<Producto> producto) {
-    }
-
-    public void deleteServicio(List<Servicio> servicio) {
-
-    }
-
-    public Date getFecha() {
-        return fecha_evento;
-    }
-
-    public void setFecha(Date fecha) {
-
-    }
 }

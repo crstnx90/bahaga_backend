@@ -12,7 +12,7 @@ import java.util.Timer;
 @Data
 @DiscriminatorValue("Servicio")
 public class Servicio extends Producto{
-    private Time tiempo_servicio;
+    private Time tiempoServicio;
 
 
 }

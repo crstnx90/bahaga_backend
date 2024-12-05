@@ -1,4 +1,15 @@
 package com.bahaga.booking.dto;
 
-public record PerfilResponse() {
+import com.bahaga.booking.model.TipoDocumento;
+
+public record PerfilResponse(
+        TipoDocumento tipoDocumento,
+        String numeroId,
+        String nombres,
+        String apellidos,
+        String pais,
+        String ciudad,
+        String correo,
+        String telefono
+) {
 }

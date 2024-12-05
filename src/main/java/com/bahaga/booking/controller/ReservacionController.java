@@ -1,15 +1,20 @@
 package com.bahaga.booking.controller;
 
+import com.bahaga.booking.dto.ReservacionDTO;
+import com.bahaga.booking.dto.ReservacionResponse;
+import com.bahaga.booking.model.Persona;
 import com.bahaga.booking.model.Reservacion;
 import com.bahaga.booking.service.ReservacionService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/reservation")
+@RequestMapping("api/reservacion")
 public class ReservacionController {
 
     @Autowired
@@ -17,35 +22,17 @@ public class ReservacionController {
 
     // Crear una nueva reservacion
     @PostMapping
-    private ResponseEntity<Reservacion> createReservacion(@RequestBody Reservacion reservacion){
-        return ResponseEntity.ok(reservacionService.save(reservacion));
-    }
-
-    // Obtener una reservación por id
-    @GetMapping("/{id}")
-    private ResponseEntity<Reservacion> getReservacion(@PathVariable Long id){
-        Optional<Reservacion> reservacionOptional=reservacionService.getReservacionById(id);
-        return reservacionOptional
-                .map(ResponseEntity::ok)
-                .orElseGet(()->ResponseEntity.notFound().build());
-    }
-
-    // Actualizar una reservación por id
-    @PutMapping("/{id}")
-    private ResponseEntity<Reservacion> updateReservacion(@PathVariable Long id, @RequestBody Reservacion reservacion){
-        Reservacion updateReservacion=reservacionService.updateReservacion(id, reservacion);
-        if(updateReservacion!=null){
-            return ResponseEntity.ok(updateReservacion);
-        } else{
-            return ResponseEntity.notFound().build();//si no se encuentra la reservacion
+    public ResponseEntity<ReservacionResponse> createReservacion(@Valid @RequestBody ReservacionDTO reservacionDTO,
+                                                                 @RequestParam String correo,
+                                                                 @RequestParam String password) {
+        try {
+            // Crear la reservación pasando el DTO que ya tiene el personaId
+            ReservacionResponse nuevaReservacion = reservacionService.createReservacion(reservacionDTO,correo,password);
+            return new ResponseEntity<>(nuevaReservacion, HttpStatus.CREATED);
+        } catch (Exception e) {
+            System.err.println("Error al crear la reservación: "+e.getMessage());
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
-    }
-
-    //Eliminar reservacion por id
-    @DeleteMapping("/{id}")
-    private ResponseEntity<Void> deleteReservacion(@PathVariable Long id){
-        reservacionService.deleteReservacion(id);
-        return ResponseEntity.noContent().build();
     }
 
 }
