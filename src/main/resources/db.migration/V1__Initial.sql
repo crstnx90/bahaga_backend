@@ -1,38 +1,43 @@
 -- Tabla Usuarios
 CREATE TABLE IF NOT EXISTS Usuarios (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    numero_id VARCHAR(20) NOT NULL,
-    nombres VARCHAR(100) NOT NULL,
-    apellidos VARCHAR(100) NOT NULL,
-    direccion VARCHAR(150),
-    pais VARCHAR(80),
-    ciudad VARCHAR(80),
+    tipo_documento VARCHAR(255) NOT NULL,      -- Correspondiente al enum TipoDocumento
+    numero_id VARCHAR(255) NOT NULL,
+    nombres VARCHAR(255) NOT NULL,
+    apellidos VARCHAR(255) NOT NULL,
+    direccion VARCHAR(255),
+    pais VARCHAR(255),
+    ciudad VARCHAR(255),
     fecha_nacimiento DATE,
-    correo VARCHAR(150) NOT NULL,
-    telefono VARCHAR(80),
-    admin TINYINT(1) DEFAULT 0,
-    tipo_usuario VARCHAR(50) NOT NULL,
-    reservacion_id BIGINT, -- Esta columna es necesaria para la clave foránea
-    FOREIGN KEY (reservacion_id) REFERENCES Reservaciones(id) -- Clave foránea que referencia Reservaciones
+    sexo VARCHAR(255),                        -- Correspondiente al enum Sexo
+    correo VARCHAR(255),
+    telefono VARCHAR(255),
+    password VARCHAR(255) NOT NULL,
+    admin BOOLEAN DEFAULT FALSE               -- Valor por defecto es false
 );
 
 -- Tabla Reservaciones
 CREATE TABLE IF NOT EXISTS Reservaciones (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    fecha DATE NOT NULL,
+    reservacion_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    fecha_evento DATE NOT NULL,
     hora TIME NOT NULL,
-    salon_id BIGINT,
-    total DECIMAL(10,2),
-    FOREIGN KEY (salon_id) REFERENCES Salon(id)
+    salon_id BIGINT,               -- Relación con el Salon
+    persona_id BIGINT,             -- Relación con la Persona
+    total DECIMAL(10,2),           -- Total de la reservación
+    tipo_evento VARCHAR(255),      -- Tipo de evento
+    cantidad_personas INT,         -- Cantidad de personas en el evento
+    observaciones TEXT,            -- Observaciones para la reservación
+    FOREIGN KEY (salon_id) REFERENCES Salon(salon_id),
+    FOREIGN KEY (persona_id) REFERENCES Persona(id)
 );
 
--- Tabla Productos_Servicios
-CREATE TABLE IF NOT EXISTS Productos_Servicios (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    nombre VARCHAR(150) NOT NULL,
-    cantidad INT,
-    precio DOUBLE(10,2) NOT NULL,
-    disponibilidad TINYINT(1) NOT NULL,
-    tipo VARCHAR(50) NOT NULL,
-    tiempo_servicio TIME
+
+
+-- Tabla Salon
+CREATE TABLE IF NOT EXISTS Salon (
+    salon_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    nombre_salon VARCHAR(255) NOT NULL,
+    descripcion TEXT,
+    capacidad INT,
+    precio DECIMAL(10,2) NOT NULL
 );
