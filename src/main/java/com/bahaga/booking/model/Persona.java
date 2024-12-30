@@ -1,6 +1,7 @@
 package com.bahaga.booking.model;
 
 import com.bahaga.booking.dto.PersonaDTO;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -34,7 +35,9 @@ public class Persona {
     private String password;
     private Boolean admin=false;//por defecto es false
 
+
     @OneToMany(mappedBy = "persona")//Relacion con reservaciones
+    @JsonIgnore
     private List<Reservacion> reservaciones;
 
     //Constructor que acepta el DTO de PersonaDTO

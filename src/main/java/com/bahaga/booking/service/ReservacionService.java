@@ -1,9 +1,6 @@
 package com.bahaga.booking.service;
 
-import com.bahaga.booking.dto.PersonaResponse;
-import com.bahaga.booking.dto.ReservacionDTO;
-import com.bahaga.booking.dto.ReservacionResponse;
-import com.bahaga.booking.dto.SalonResponse;
+import com.bahaga.booking.dto.*;
 import com.bahaga.booking.model.Persona;
 import com.bahaga.booking.model.Reservacion;
 import com.bahaga.booking.model.Salon;
@@ -13,6 +10,7 @@ import com.bahaga.booking.repository.SalonRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -31,24 +29,20 @@ public class ReservacionService {
     private PersonaService personaService;//Personaservice inyectado para implementar si la persona inicio sesion
 
     // Crear y guardar una reservación
-    public ReservacionResponse createReservacion(ReservacionDTO reservacionDTO, String correo,String password) {
+    public ReservacionResponse createReservacion(ReservacionDTO reservacionDTO, String correo) {
 
-        //Verifica las credenciales del usuario
-        Optional<Persona> personaOptional=personaService.login(correo, password);
-        if (personaOptional.isEmpty()){
-            throw new IllegalArgumentException("Credenciales inválidas, no se puede realizar reservación");
+        // Verificar si la persona con ese correo existe
+        Optional<Persona> personaOptional = personaService.getByCorreo(correo);
+        if (personaOptional.isEmpty()) {
+            throw new IllegalArgumentException("Usuario no encontrado con el correo: " + correo);
         }
-        Persona persona= personaOptional.get();
+        Persona persona = personaOptional.get();
 
         // Buscar el salón por su ID
         Salon salon = salonRepository.findById(reservacionDTO.salonId())
                 .orElseThrow(() -> new IllegalArgumentException("Salón no encontrado con ID: " + reservacionDTO.salonId()));
 
-            // Buscar la persona (funcionaba para pruebas)
-        /*Persona persona = personaRepository.findById(reservacionDTO.personaId())
-                .orElseThrow(() -> new IllegalArgumentException("Persona no encontrada con ID: " + reservacionDTO.personaId()));*/
-
-        // Crear la reservación y asignar el salón
+        // Crear la reservación y asignar los datos
         Reservacion reservacion = new Reservacion();
         reservacion.setFechaEvento(reservacionDTO.fechaEvento());
         reservacion.setHora(reservacionDTO.hora());
@@ -58,42 +52,53 @@ public class ReservacionService {
         reservacion.setCantidadPersonas(reservacionDTO.cantidadPersonas());
         reservacion.setObservaciones(reservacionDTO.observaciones());
 
-
-        // aqui iria la logica para implementar el total cuando se inclyen productos
-
         // Guardar la reservación en la base de datos
-        Reservacion savedReservacion = reservacionRepository.save(reservacion);
+        try {
+            Reservacion savedReservacion = reservacionRepository.save(reservacion);
 
-        // Crear el objeto PersonaResponse
-        PersonaResponse personaResponse = new PersonaResponse(
-                persona.getId(),
-                persona.getTipoDocumento(),
-                persona.getNumeroId(),
-                persona.getNombres(),
-                persona.getApellidos(),
-                persona.getPais(),
-                persona.getCiudad(),
-                persona.getCorreo(),
-                persona.getTelefono()
-        );
+            // Crear el objeto PersonaResponse
+            PersonaResponse personaResponse = new PersonaResponse(
+                    persona.getId(),
+                    persona.getTipoDocumento(),
+                    persona.getNumeroId(),
+                    persona.getNombres(),
+                    persona.getApellidos(),
+                    persona.getPais(),
+                    persona.getCiudad(),
+                    persona.getCorreo(),
+                    persona.getTelefono()
+            );
 
-        // Crear el objeto SalonResponse
-        SalonResponse salonResponse = new SalonResponse(
-                salon.getSalonId(),
-                salon.getDescripcion(),
-                salon.getCapacidad()
-        );
+            // Crear el objeto SalonResponse
+            SalonResponse salonResponse = new SalonResponse(
+                    salon.getDescripcion(),
+                    salon.getCapacidad()
+            );
 
-        // Crear y devolver el objeto ReservacionResponse
-        return new ReservacionResponse(
-                savedReservacion.getReservacionId(),
-                savedReservacion.getFechaEvento(),
-                savedReservacion.getHora(),
-                personaResponse,
-                salonResponse,
-                savedReservacion.getTipoEvento(),
-                savedReservacion.getCantidadPersonas(),
-                savedReservacion.getObservaciones()
-        );
+            // Crear y devolver el objeto ReservacionResponse
+            return new ReservacionResponse(
+                    savedReservacion.getReservacionId(),
+                    savedReservacion.getFechaEvento(),
+                    savedReservacion.getHora(),
+                    personaResponse,
+                    salonResponse,
+                    savedReservacion.getTipoEvento(),
+                    savedReservacion.getCantidadPersonas(),
+                    savedReservacion.getObservaciones()
+            );
+        } catch (Exception e) {
+            throw new IllegalStateException("Error al guardar la reservación: " + e.getMessage(), e);
+        }
+    }
+
+
+    // Obtener todas las reservaciones
+    public List<Reservacion> getAllReservaciones() {
+        return reservacionRepository.findAll();
+    }
+
+    // Obtener todas las reservaciones por correo
+    public List<Reservacion> getAllReservacionesByCorreo(String correo) {
+        return reservacionRepository.findByPersonaCorreo(correo);
     }
 }

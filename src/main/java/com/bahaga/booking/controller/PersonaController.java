@@ -2,24 +2,31 @@ package com.bahaga.booking.controller;
 
 import com.bahaga.booking.dto.*;
 import com.bahaga.booking.model.Persona;
+import com.bahaga.booking.service.JwtUtil;
 import com.bahaga.booking.service.PersonaService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.hibernate.mapping.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.context.annotation.SessionScope;
 
 import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("api/personas")
+@RequestMapping("/api/personas")
 public class PersonaController {
 
     @Autowired
     private PersonaService personaService;
+
+    @Autowired
+    private JwtUtil jwtUtil;
+
 
     // Crear una nueva persona
     @PostMapping
@@ -96,20 +103,20 @@ public class PersonaController {
         }
     }
 
-    // Realizar login de la cuenta ya creada
+    // Realizar login de una cuenta creada y devolver un jwt
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody @Valid LoginRequest loginRequest, HttpSession session) {
-
-        Optional<Persona> persona = personaService.login(loginRequest.correo(),loginRequest.password());
+    public ResponseEntity<?> login(@RequestBody @Valid LoginRequest loginRequest) {
+        Optional<Persona> persona = personaService.login(loginRequest.correo(), loginRequest.password());
 
         if (persona.isPresent()) {
-            //Almacenar el correo del usurario en la sesion
-            session.setAttribute("usuario", persona.get().getCorreo());
+            // Generar el token JWT
+            String token = jwtUtil.generateToken(persona.get().getCorreo());
 
-            return ResponseEntity.ok(new LoginResponse(true,"Inicio de sesión exitoso"));
+            // Devolver el token al cliente
+            return ResponseEntity.ok(new LoginResponse(true, "Inicio de sesión exitoso", token));
         } else {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new LoginResponse(false,"Credenciales inválidas"));
+                    .body(new LoginResponse(false, "Credenciales inválidas", null));
         }
     }
 
@@ -126,14 +133,13 @@ public class PersonaController {
         }
     }
 
-    //Metodo para mostrar informacion del perfil
+    // Método para mostrar información del perfil usando el token
     @GetMapping("/perfil")
-    @ResponseBody
-    public ResponseEntity<?> obtenerPerfil(HttpSession session) {
-        // Obtener el correo del usuario desde la sesión
-        String correoUsuario = (String) session.getAttribute("usuario");
+    public ResponseEntity<?> obtenerPerfil(@RequestHeader("Authorization") String token) {
+        try {
+            // Validar el token
+            String correoUsuario = jwtUtil.validateToken(token.replace("Bearer ", ""));
 
-        if (correoUsuario != null) {
             Optional<Persona> personaOptional = personaService.getByCorreo(correoUsuario);
             if (personaOptional.isPresent()) {
                 Persona persona = personaOptional.get();
@@ -152,10 +158,10 @@ public class PersonaController {
 
                 return ResponseEntity.ok(perfilResponse);
             } else {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Usuario no encontrado"); // No autorizado si no se encuentra el usuario
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Usuario no encontrado");
             }
-        } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No hay usuario logueado"); // Si no hay usuario en la sesión
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token inválido o expirado");
         }
     }
 

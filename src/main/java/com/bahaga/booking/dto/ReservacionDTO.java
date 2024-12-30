@@ -12,7 +12,7 @@ import java.util.List;
 
 public record ReservacionDTO(
         LocalDate fechaEvento,
-        Time hora,
+        String hora,
         Long salonId,  // SalonId como Long
         Long personaId,
         Double total,

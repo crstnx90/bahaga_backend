@@ -8,7 +8,7 @@ import java.time.LocalDate;
 public record ReservacionResponse(
         Long reservacionId,
         LocalDate fechaEvento,
-        Time hora,
+        String hora,
         PersonaResponse persona, // Solo devuelve los detalles de la persona relevantes
         SalonResponse salon,  // Solo devuelve los detalles del salón relevantes
         TipoEvento tipoEvento,

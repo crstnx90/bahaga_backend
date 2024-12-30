@@ -24,7 +24,7 @@ public class Reservacion {
     private Long reservacionId;
 
     private LocalDate fechaEvento;
-    private Time hora;
+    private String hora;
 
     @ManyToOne
     @JoinColumn(name = "persona_id")
